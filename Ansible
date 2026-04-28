@@ -1,0 +1,85 @@
+CustomFacts helps to build logic about environment specific configuration
+-User can execyte as per the environment configuration [dev/qa/stg/prod]
+Steps to create Custom facts-
+-Create /etc/ansible/facts.d in Clients machine
+-Create one or more custom facts inside facts.d folder
+-Output of the facts file should be JSON format
+-Facts file should have execution permission
+
+Script:
+(ansible-env) root@ip-172-31-17-165:~/ansible-project# cat get_version.fact 
+#!/bin/bash
+
+# Get Git Version
+if command -v git >/dev/null 2>&1
+then
+    GIT_VERSION=$(git --version | awk '{print $3}')
+else
+    GIT_VERSION="not_installed"
+fi
+
+# Get Apache Version
+if command -v apache2 >/dev/null 2>&1
+then
+    APACHE_VERSION=$(apache2 -v | head -n 1 | awk -F/ '{print $2}' | awk '{print $1}')
+else
+    APACHE_VERSION="not_installed"
+fi
+
+# Create JSON Output
+cat << EOF
+{
+  "git": "$GIT_VERSION",
+  "apache2": "$APACHE_VERSION"
+}
+EOF
+
+Collection of Hosts is called Inventory.
+Types of Inventory:
+(1)Static Inventory
+(2)Dynamic Inventory - Dynamic Inventory means Ansible automatically fetches the list of hosts (servers) from external sources instead of using a static file.
+In real-world:
+-Servers are created & deleted dynamically
+-IP addresses change frequently
+-Manual updates are not practical
+👉 Dynamic inventory solves this problem
+
+Dynamic inventory uses:
+-Scripts (Python, Bash)
+-Plugins (AWS, Azure, GCP)
+👉 These return JSON format to Ansible
+
+List all the dynamic inventory plugin list:
+#ansible-doc -t inventory -l
+Add Enable plugin Syntax in ansible.cfg file
+#cat ansible_plugin.txt
+
+
+Ansible Playbooks:
+==================
+Basically to execute the ansible playbook 2 ways.They are:
+1)Adhoc commands
+2)Playbooks
+Why do you need Playbooks?
+A Playbook is a YAML file where you define automation tasks step-by-step.
+Instead of running commands one by one, playbooks automate everything in sequence.
+Write once, use multiple times across environments (Dev, QA, Prod)
+Ensures same configuration across all servers
+Playbooks allow:
+
+Conditions (when)
+Loops
+Variables
+Roles
+Running playbook multiple times gives same result (no duplication)
+Infrastructure is defined in code → easy to version control (Git)
+
+Structure of Playbook:
+======================
+Tasks
+Play - Play is a combination of Tasks + Target
+Playbooks - User wants to perform like Playbook is a combination of List or Sequesnce of plays
+
+#ansible all -i  demo.aws_ec2.yml -u ubuntu -m ping
+
+
