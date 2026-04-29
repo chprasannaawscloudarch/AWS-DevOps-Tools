@@ -82,4 +82,447 @@ Playbooks - User wants to perform like Playbook is a combination of List or Sequ
 
 #ansible all -i  demo.aws_ec2.yml -u ubuntu -m ping
 
+List all Dynamic Inventory Plugins List:
+----------------------------------------
+ansible-doc -t inventory -l
+ansible-doc -t inventory -l >> ansible_plugin.txt
+Add Enable plugin Syntax in Ansible cfg file:
+---------------------------------------------
+[inventory]
+enable_plugins = aws_ec2, yaml, ini, host_list, auto, toml
+Install boto3 in Python Virtual Environment:
+--------------------------------------------
+sudo apt update
+sudo apt install ansible python3-pip -y
+pip3 install boto3 botocore
+Create AWS User and Export Creds on Ansible Engine
+export AWS_ACCESS_KEY_ID=''
+export AWS_SECRET_ACCESS_KEY=''
+Create YML file for AWS plugin:
+-------------------------------
+->plugin: amazon.aws.aws_ec2
+Verify and populate the AWS Dynamic Inventory:
+---------------------------------------------
+ansible-inventory -i <AWS_PLUGIN_FILENAME> --graph
+ansible-inventory -i demo.aws_ec2.yml --graph
+
+Executing playbooks with out provising execution commands
+1)Define shebang of ansible-playbook in every yml file
+#which ansible-playbook
+/root/ansible-project/ansible-env/bin/ansible-playbook
+2)Include remote user in every yaml file
+remote_user: ubuntu
+3)Define the inventory in the ansible.cfg file
+inventory=/root/ansible-project/demo.aws_ec2.yml
+Executing playbooks with out provising execution commands
+#cat demo.aws_ec2.yml
+plugin: amazon.aws.aws_ec2
+filters:
+  instance-state-name: running
+
+update_cache: yes is used in the apt module to update the package list from repositories.
+👉 It is equivalent to running:[apt update]
+
+Verify playbook syntax before execution
+    --syntax-check
+Execute playbook in DryRun Mode:
+    --check
+Execute playbook with verbose output
+    -v
+
+User needs to put some debug information/print information while executing the stuff
+Ansible use debug module for such print statements
+debug module is helpful for debugging variables and expressions
+deb module accepts 3 parameters:
+-msg
+-var
+-verbosity
+
+- name: This is overview of Ansible debug module
+  hosts: all
+  remote_user: ubuntu
+  become: 'yes'
+  tasks:
+    - name: Task for Debug module messaging
+      debug:
+        msg: "Hi This is Custom message for Debug module"
+    - name: Print two lines of messages
+      debug:
+        msg:
+          - "This is number one debug message"
+          - "This is number two debug message"
+    - name: Print variables in messages
+      debug:
+        msg:
+          - "Host IP is {{ inventory_hostname }}"
+          - System {{ inventory_hostname }} has gateway {{ ansible_default_ipv4.gateway }}
+
+Variables:
+=========
+- name: This is overview of Ansible debug module
+  hosts: all
+  remote_user: ubuntu
+  become: 'yes'
+  tasks:
+    - name: Task for Debug module messaging
+      debug:
+        msg: "Hi This is Custom message for Debug module"
+    - name: Print two lines of messages
+      debug:
+        msg:
+          - "This is number one debug message"
+          - "This is number two debug message"
+    - name: Print variables in messages
+      debug:
+        msg:
+          - "Host IP is {{ inventory_hostname }}"
+          - System {{ inventory_hostname }} has gateway {{ ansible_default_ipv4.gateway }}
+    - name: debug module variable
+      debug:
+        var: inventory_hostname
+    - name: Debug with verbosity
+      debug:
+        msg: "This is debug message"
+        verbosity: 2
+DataCollection Objects:
+=======================
+Actually variable is used to store the single value..But Data collection or Data store used to store the multiple values.
+Sequence data structure (which means comma separated)
+map data structure (key and value pairs)
+- name: This is overview of ansible data collection
+  hosts: all
+  become: yes
+  remote_user: ubuntu
+  vars:
+    xyz: Hello This is XYZ
+    packages: [ 'wget', 'curl', 'vim', 'unzip' ]
+    cities:
+      - Hyderabad
+      - Visakhapatnam
+      - Telangana
+      - AndhraPradesh
+    webserver: [ 'Linux': 'Debian', 'Unix': 'RedHat' ]
+  tasks:
+    - name: This is Data Collection Retrieval
+      debug:
+        var: xyz
+    - name: This is list Data Collection Retrieval
+      debug:
+        var: packages
+    - name: This is map key-value pairs
+      debug:
+        var: webserver
+Uses of Set_Fact and Register:
+==============================
+🔥 1. What is register?
+Captures output of a task/module and store it in a variable.
+Ansible modules generally returns a data structure
+User can store the output of a module using ansible register module.
+
+🔥 2. What is set_fact?
+Creates custom variables dynamically
+Used to store calculated or modified values
+register → output capture
+set_fact → custom variable create
+
+- name: Overview of register and set facts
+  hosts: all
+  become: yes
+  remote_user: ubuntu
+  tasks:
+    - name: Retrieve Installed Shell version
+      shell: "bash --version"
+      register: bash_version
+    - name: Display the variable value
+      debug:
+        var: bash_version.stdout_lines[0].split()[3]
+
+Output> "bash_version.stdout_lines[0].split()[3]": "5.2.21(1)-release"
+Above variable is nooking good so we will go ahead and create a vars?
+
+Beacuse vars is the outside the task. whatever we want to retrive that is not global. That is initialized by inside the task.we should go ahead and mention inside the tasks not outside the tasks.
+For that we need to use the set_fact.
+- name: Overview of register and set facts
+  hosts: all
+  become: yes
+  remote_user: ubuntu
+  tasks:
+    - name: Retrieve Installed Shell version
+      shell: "bash --version"
+      register: bash_version
+    - set_fact:
+        bash_var: "{{bash_version.stdout_lines[0].split()[3]}}"
+    - debug:
+        var: bash_var
+Arithmetic Operations in Playbook:
+=================================
+- name: This is to display arithmetic Operations on variables
+  hosts: localhost
+  gather_facts: false
+  vars:
+    a: 10
+    b: 20
+  tasks:
+    - name: Debug the operations
+      debug:
+        msg:
+          - "Value of a is: {{a}}"
+          - "Value of b is: {{b}}"
+          - "Addition is: {{a + b}}"
+Pass the variables to ansible playbook at runtime:
+==================================================
+vars_prompt:
+Read the input from the user that is string type
+Typecast the variables:
+{{x|int + y|int}}
+- name: Passing Runtime Values to the variables
+  hosts: localhost
+  gather_facts: false
+  vars:
+    a: 10
+    b: "{{a*10}}"
+  vars_prompt:
+    - name: x
+      prompt: Enter the value of x
+      private: no
+    - name: y
+      prompt: Enter the value of y}
+      private: no
+  tasks:
+    - name: Operations on variables
+      debug:
+        msg:
+          - "value of a: {{a}}"
+          - "value of b: {{b}}"
+          - "Addition of user-defined values is: {{x|int + y|int}}"
+Filters and Methods:
+===================
+Filters and Methods are ways to perform operations on your variables
+Filters: | sysmbol[Jinja Template]
+Methods: python methods and custom filters
+Ansible Methods:
+===============
+
+Ansible Pause Module -Pause Execution:
+======================================
+Ansible Pause Module:Pause Module is used to pause the execution of a playbook for a specified amount of time or until a user provides input.
+Usecases:
+-waiting for a service to start
+-waiting for user input
+-pausing for manual maintenance
+parameters:
+===========
+minute
+seconds
+prompt
+echo
+
+Example: Totally 3 Scenarios/tags:
+1)Example Playbook for pausing for manual maintenance
+2)Install and start Apache HTTP sERVER ON uBUNTU
+3)Ansible pause parameters
+
+- name: Example playbook for pausing manual ,aintenance
+  hosts: all
+  become: yes
+  remote_user: ubuntu
+  tasks:
+    - name: Notify about Maintainence
+      debug:
+        msg: "Maintainence window: Please perform the required checks"
+    - name: Pause for maintainence
+      pause:
+        prompt: "Press 'Enter' to continue after maintainence is completed"
+    - name: Resume operations post maintainence
+      shell: echo "Mainatinence completed ,resuming operations"
+  tags: Scenario1
+- name: Install and start Apache HTTP server on ubuntu
+  hosts: all
+  become: yes
+  remote_user: ubuntu
+  tasks:
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+    - name: Installapache HTTP Server
+      apt:
+        name: apache2
+        state: present
+    - name: Start and enable apache service
+      systemd:
+        name: apache2
+        state: started
+        enabled: yes
+    - name: Pause to allow the webserver to start
+      pause:
+        seconds: 30
+    - name: Ensure apache is running
+      systemd:
+        name: apache2
+        state: started
+      register: httpd_status
+    - name: Display apache status
+      debug:
+        msg: "Apache is {{ httpd_status.state }} and enabled"
+  tags: Scenario2
+- name: Ansible Pause parameters
+  hosts: all
+  become: yes
+  remote_user: ubuntu
+  tasks:
+    - name: Pause for 30 seconds
+      pause:
+        seconds: 30
+    - name: Pass for user confirmation
+      pause: 
+        prompt: "press 'Enter' to continue after verifying the backup"
+    - name: pause for user input
+      pause:
+        prompt: "Enter the Username"
+        echo: yes
+    - name: pause for user password woth out echoing
+      pause:
+        prompt: "Enter the Password"
+        echo: no
+  tags: Scenario3
+
+Passing variable to Ansible playbook via command line:
+=====================================================
+while executing the playbooks we need to send couple of variables to the playbook?
+Passing variables via the CommandLine: Pass dynamic varibles using --extra-vars
+User can pass  variables directly when run the playbook using the --extra-vars or -e option
+#ansible-playbook playbook.yml --extra-vars "var1=value1 var2=value2"
+#ansible-playbook playbook.yml --extra-vars {"var1":"value1", "var2":"value2"}
+#ansible-playbook playbook.yml --extra-vars "@vars.yml"
+
+ansible_hostname and inventory_hostname
+=======================================
+
+delegate_to --> will execute only on the local machine
+- name: Run a command on the local machine
+  command: Running on the localhost
+  delegate_to: localhost
+tags: scenario2
+local_action: 
+
+Ansible command module vs Shell module:
+---------------------------------------
+Command and Shell modules both allow you to run commands on remote machines.
+Command Module:
+Executes commands directly
+Does NOT use shell
+Safer and faster
+- name: Check uptime
+  command: uptime
+Shell Module:
+Executes commands using shell (/bin/sh)
+Supports pipes, redirects, variables
+Executes commands using shell (/bin/sh)
+Supports pipes, redirects, variables
+
+4. Real-World Comparison
+- name: Get log errors
+  command: cat /var/log/syslog | grep error
+Using command will not work but shell will work.
+
+Using Date,time,timestamp:
+=========================
+Ansible provides various ways to handle date and time, primarily through the ansible_date_time variable and the strftime filter.
+ansible_date_time variable :
+    date
+    time
+    year,month,day,hour,minute,second: Individual date and time components.
+-Create Backup files with timestamps
+-Conditional execution based on time
+-put the time in Logs
+Using strftime to filter format ates and times according to your needs.
+
+Ansible playbook Dry Run:
+========================
+There are 2 important features to perform dryruns:
+check mode and diff mode
+->check mode: --check allows the playbook to execute the playbook in dryrun mode
+#ansible-playbook playbook.yml --check
+Runs playbook in dry-run mode
+Shows what changes would happen
+Does NOT actually make changes
+->diff mode: --diff
+Diff mode works mainly for:
+copy
+template
+lineinfile
+
+Comparison Operators:
+====================
+Membership Operators:
+=====================
+Membership operator also returns True or False
+in and notin are the membership operators
+TestOperators: Test Operators are used to perform the validation in Ansible
+Tests for variables:
+->isdefined
+->isundefined
+Tests for string:
+->String is Lower
+->String is Upper
+->String is String
+
+Conditional statements:
+======================
+when, failed_when, changed_when
+
+
+Handlers:
+========
+Special tasks that run only when notified
+Typically used for:
+Restart services
+Reload configs
+notify చేసినప్పుడు మాత్రమే run అయ్యే special tasks
+ఎక్కువగా:
+service restart
+config reload
+
+One notify → multiple handlers
+tasks:
+  - name: Update config
+    copy:
+      src: file
+      dest: /etc/file
+    notify: restart web
+
+handlers:
+  - name: Restart Apache
+    listen: restart web
+    service:
+      name: apache2
+      state: restarted
+
+  - name: Restart Nginx
+    listen: restart web
+    service:
+      name: nginx
+      state: restarted
+
+- name: Install and configure Apache
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Install apache
+      apt:
+        name: apache2
+        state: present
+
+    - name: Update config file
+      copy:
+        src: index.html
+        dest: /var/www/html/index.html
+      notify: Restart Apache
+
+  handlers:
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
 
