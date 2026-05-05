@@ -1,0 +1,105 @@
+VPC
+---
+Aws we have region -> Mumbai region ->3AZ's->Creating EC2 Instance in ap-south-1b inside one physical host
+Mumbai Region->AZ->Physical Host [2Users Modiji and Rahul they are totally isolated both are AWS Users.Rahul creating Ec2 Instance and Modiji creating EC2 Instance.Question is are you able to communicate?]
+Both instances are placing in same host.
+we cannot decide physical host.Decided by AWS algorithm.
+Are they able to communicate with each other?
+If yes then there is no Security.
+If No how AWS is isolating the resources.
+Concept is AWS VPC---------
+Using same physical host but different VPC's.Every user have default VPC.
+Delete the default VPC.
+Example of VPC -> Mumbai Region-> Complete Mumbai City have one isolated place called Own Home[Full controlwho can access my home].
+Isolated place we can call it as VPC.
+Without VPC we cannot create any EC2 Instance.
+(1)Create VPC
+(2)IPAddress->public and private ip->Always using private IP address.
+Private IP ->
+classA - 10.0.0.0 to 10.255.255.255/8
+classB - 172.16.0.0 to 172.31.255.255/16
+classC - 192.168.0.0 to 192.168.255.255/24
+(3)Subnet - Actually creating subnet inside the AZ.If you are not creating subnet means you are not able to use az.If you are not using az means datacenter then how you can craete EC2 Instance right?
+Mumbai Region[ap-south-1] -> vpc[192.168.0.0/24] -> 3AZ's[ap-south-1a,ap-south-1b,ap-south-1c] -> Inside az ap-south-1a[Create Subnet] -> Inside subnet we can able to create EC2Instance
+One subnet cannot cross az.If you carete multiple subnets inside single az.
+
+Inside one az one subnet created and inside subnet created EC2 Instance but if az goes down then what we cando?whats the solution?
+2Solutions overhere -> 1 is to buy and another one is to add ip address inside subnets but here we have only 5IP Address range to add.Then what should we do?
+This is easy and there is no charges as well. But if we need to add 6subnets?
+=============================================================================
+Subnetting -> Using single subnet to create multiple subnets using the concept called subnetting.
+1Subnet haveing 126Ip's
+According to AWS -> 
+Created 2 EC2 Instances on 2 different subnets -> Try to access -> Unable to access the instance because everything is ready like Created VPC and Created Subnets and Created EC2 Instances inside 
+subnet but there is no internet connection for VPC.
+(4)IGW
+Here VPC is providing us isloated resources into the AWS.
+Region->VPC IP->2Subnets splitted main vpc IP into multiple IPs->Each subnet is having public and private instances.
+Using the IP addresses to access servers over the internet.
+
+Create IGW and attach it to VPC -->  Still no access why?
+
+RouteTable->Router ->Associate subnets to RouteTable -> RouteTables->Routes->For any traffic Go to the igw -[Inbound and Outbound is working fine]
+
+Private IPS are in different subnets and are they able to communicate with each other?
+
+Answer is Yes....................
+
+Because by default 2 subnets are connected through the router
+
+IGW is only works with the ec2instance which is having only publicIP 
+
+If there is no publicIP then there is no access for inbound and outbound traffic
+
+Example is How we are using real world application on the real worls------------->one webserver[all the users can have access this is having publicIP]-> one db[provate ip]
+
+Task:VPC->2AZS->2public and 2private subnets
+============================================
+Here anybody have inbound access to connect the webserver
+
+NAT Gateway:
+===========
+2public subnets are dirrectly connected to IGW it means anybody is having internet access to connect directky to ec2 instances .we can call it as inbound
+Go instde the ec2 instance and send requests to the internet we call it outbound internet.
+All of the subnets are associated with RouteTable.
+Suppose if am going to add route to the IGW then all of four subnets will be public subnet.
+
+RT_For_Public -> Associates 2 public subnetes
+RT_For_Private -> Associates 2 private subnets
+
+Now 2 RouteTables [Public and Private] -> public subnets associated with public route table and provate subnets are associated with private route table
+
+I want to connect to private subnets like DB but there is no access no inbound and no outbound.To add NAT Gateway
+->How we can access private subnet ec2 instance?
+->I want to configure ec2 instance inside private subnet and install db server inside the instance.
+There are 2 ways to connect with this private subnet ec2 instances. They are:
+(1)EC2 Instance connect EndPoint using AWS Username and password
+(2)Bastion Host
+-------------------First access to publicIp EC2 Instance and next connect to private subnet inside ec2 onstance.---------------------------
+But no internet in this proivate subnet inside instance?
+Here I want internet but i dont want inbound internet to the private subnet only outbound internete is enough.
+
+Challenge is we should provide outbound access to private subnets.
+NAT Gateway
+===========
+Outbound means anybody can use internet from this EC2 Instance and download rewuired software.This is very imp because if am not providing pputbound then updation of software will not happen.
+
+NAT is which will get internet from IGW and it will provide this connectivity in db instance.
+Create NAT Gateway in public Subnet and get interet from IGW AND 
+NAT gateway having publicip and using publicip connect to IGW and get the internet to private server.So go to Main RouteTable and add entry like if any route towards the IGW 
+
+VPC Peering Connection:
+======================
+Question -> 2 different accounts and 2 different vpcs are they able to communicat with each other? No
+Question -> Same account but 2 different vpcs are they able to communicate with each other? No
+Bydefault 2 vpcs cannot connect to each other.
+VPC Peering connection <-> vpc can communicate with other.
+
+Task:
+2different regions->2Vpc's->2az's->2Ec2Instances in private subnet-> Connection?
+Answer is Enable communication between them so we can create peering
+
+
+Network ACL:
+===========
+
