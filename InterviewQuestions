@@ -1,0 +1,17 @@
+Most companies are testing
+->Debugging ability
+->System design thinking
+->Real production experience
+
+What exactly happens when a kubernetes pod gets OOMKilled?
+Your CICD pipeline works in staging but fails in production with permission denied-how do you debug?
+How does kubernetes DNS work across namespaces,and what can break it?
+Terraform state lock is stuck-how do you recover safely?
+How do you design observability(metrics,logs,traces) for high-scale systems?
+A secret was exposed in GitHub-what's your incident response plan?
+How does HPA work internally in Kubernetes?
+What is error budget & burn rate in SRE?
+Your service has latency spikes every 60seconds - how do you debug?
+Push vs Pull CD - how does GitOps(ArgoCD) actually work?
+What are Dockerfile best practises for security and performance?
+What is Platform Engineering and how would you design an IDP?
