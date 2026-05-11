@@ -1,0 +1,8 @@
+Error ->CrashLoopBackOff
+What it Means -> Container is crashing repeatedly.Kubernetes is trying to restart it.
+How to Identify -> 
+ImagePullBackOff
+Pending
+OOMKilled
+ContainerCreating
+Evicted
